@@ -71,7 +71,7 @@ glider.add_constant('y_f', y_f)
 glider.add_constant('vx_f', vx_f)
 glider.add_constant('vy_f', vy_f)
 
-glider.add_constant('eps_Cl', 1e-1)
+glider.add_constant('eps_Cl', 5e-1)
 
 # define other initial/terminal constraints
 glider.add_constraint('initial', 't')
@@ -128,7 +128,7 @@ cont = giuseppe.continuation.ContinuationHandler(num_solver, seed_sol)
 
 cont.add_linear_series(100, {'y_f': y_0 - 18}, bisection=True)
 cont.add_linear_series(100, {'vx_f': 9, 'vy_f': 1, 'y_f': 995}, bisection=True)
-cont.add_linear_series(100, {'y_f': 990, 'vx_f': 9, 'vy_f': .8}, bisection=True)
+cont.add_linear_series(100, {'y_f': 988, 'vx_f': 9, 'vy_f': .8}, bisection=True)
 
 cont.add_linear_series(100, {'y_f': y_f}, bisection=True)
 cont.add_logarithmic_series(200, {'eps_Cl': 1e-6}, bisection=True)
