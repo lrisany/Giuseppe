@@ -2,7 +2,7 @@ import numpy as np
 import giuseppe
 import pickle
 
-giuseppe.utils.compilation.JIT_COMPILE=False
+giuseppe.utils.compilation.JIT_COMPILE = False
 prob = giuseppe.problems.input.StrInputProb()
 
 prob.set_independent('t')
@@ -43,7 +43,6 @@ prob.add_control('sig')
 prob.add_parameter('v_bound')
 prob.add_parameter('gam_bound')
 prob.add_parameter('psi_bound')
-
 
 # define cost: minimize gradient slope
 prob.set_cost('0', '0', 't')
@@ -127,10 +126,9 @@ prob.add_constant('max_Cl', max_Cl)
 prob.add_constant('min_sig', min_sig)
 prob.add_constant('max_sig', max_sig)
 
-prob.add_constant('eps_Cl', 1e-6)
-prob.add_constant('eps_sig', 1e-6)
-prob.add_constant('eps_beta', 1e-6)
-
+prob.add_constant('eps_Cl', 1e-1)
+prob.add_constant('eps_sig', 1e-1)
+prob.add_constant('eps_beta', 1e-1)
 
 # define other initial/terminal constraints
 prob.add_constraint('initial', 't')
@@ -148,7 +146,6 @@ prob.add_constraint('terminal', 'v - v_bound + delta_v')
 prob.add_constraint('terminal', 'gam - gam_bound + delta_gam')
 prob.add_constraint('terminal', 'psi - psi_bound + delta_psi')
 
-
 # bound the controls
 prob.add_inequality_constraint(
     'control', 'Cl', lower_limit='min_Cl', upper_limit='max_Cl',
@@ -158,19 +155,36 @@ prob.add_inequality_constraint(
     'control', 'sig', lower_limit='min_sig', upper_limit='max_sig',
     regularizer=giuseppe.problems.symbolic.regularization.ControlConstraintHandler('eps_sig', method='sin'))
 
-
 # Create the OCP problem and numeric solver
 with giuseppe.utils.Timer(prefix='Compilation Time:'):
     comp_prob = giuseppe.problems.symbolic.SymDual(prob, control_method='differential').compile()
     num_solver = giuseppe.numeric_solvers.SciPySolver(comp_prob, verbose=1, node_buffer=1000)
 
 Cl_guess = 0
-sig_guess = 0
+sig_guess = .067
+
+
+def ctrl2reg1(cl: np.array) -> np.array:
+    return np.arcsin((2 * cl - min_Cl - max_Cl) / (max_Cl - min_Cl))
+
+
+def reg2ctrl1(cl_reg: np.array) -> np.array:
+    return 0.5 * ((max_Cl - min_Cl) * np.sin(cl_reg) + max_Cl + min_Cl)
+
+def ctrl2reg2(sig: np.array) -> np.array:
+    return np.arcsin((2 * sig - min_sig - max_sig) / (max_sig - min_sig))
+
+
+def reg2ctrl2(sig_reg: np.array) -> np.array:
+    return 0.5 * ((max_sig - min_sig) * np.sin(sig_reg) + max_sig + min_sig)
+
 
 # Generate guess
-guess = giuseppe.guess_generation.auto_propagate_guess(comp_prob, control= np.array((Cl_guess, sig_guess)),
-                                                       p= np.array((100,-.005, 0)), t_span=10, initial_states=np.array((x_0, y_0, z_0, 100,-.005, 0)))
-guess = giuseppe.guess_generation.InteractiveGuessGenerator(comp_prob, num_solver=num_solver, init_guess=guess).run()
+guess = giuseppe.guess_generation.auto_propagate_guess(comp_prob,
+                                                       control=np.array([ctrl2reg1(Cl_guess), ctrl2reg2(sig_guess)]),
+                                                       p=np.array([100, -.005, 0]), t_span=.1,
+                                                       initial_states=np.array([x_0, y_0, z_0, 100, -.005, 0]))
+# guess = giuseppe.guess_generation.InteractiveGuessGenerator(comp_prob, num_solver=num_solver, init_guess=guess).run()
 
 # control= np.array((Cl_guess, sig_guess))
 with open('guess.data', 'wb') as f:
@@ -183,9 +197,15 @@ with open('seed_sol.data', 'wb') as f:
 
 cont = giuseppe.continuation.ContinuationHandler(num_solver, seed_sol)
 
-cont.add_linear_series(100, {'x_f': x_f, 'y_f': y_f})
-cont.add_linear_series(100, {'z_f': z_f})
-cont.add_linear_series(100, {'gam_f': gam_f, 'psi_f': psi_f})
+# cont.add_linear_series(100, {'x_f': x_f, 'y_f': y_f})
+# cont.add_linear_series(100, {'z_f': z_f})
+# cont.add_linear_series(100, {'delta_gam': delta_gam, 'psi_f': delta_gam})
+
+# the below is from Winston's version
+psi1 = -1 * np.pi / 180
+gam1 = 1 * np.pi / 180
+cont.add_linear_series(100, {'delta_gam': gam1}, bisection=True)
+cont.add_linear_series(100, {'x_f': seed_sol.p[1] * np.sin(psi1), 'y_f': seed_sol.p[1] * np.cos(psi1), 'delta_psi': psi1}, bisection=True)
 cont.add_logarithmic_series(200, {'eps_Cl': 1e-6})
 cont.add_logarithmic_series(200, {'eps_sig': 1e-6})
 
