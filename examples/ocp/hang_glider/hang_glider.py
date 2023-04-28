@@ -42,8 +42,8 @@ glider.add_expression('W', 'm*g')
 # set up equations of motion
 glider.add_state('x', 'vx')
 glider.add_state('y', 'vy')
-glider.add_state('vx', '-L*sinN - D*cosN')
-glider.add_state('vy', 'L*cosN - D*sinN - g')
+glider.add_state('vx', '-L*sinN/m - D*cosN/m')
+glider.add_state('vy', 'L*cosN/m - D*sinN/m - g')
 
 # set controls
 glider.add_control('Cl')
@@ -84,7 +84,6 @@ glider.add_constraint('terminal', 'y - y_f')
 glider.add_constraint('terminal', 'vx - vx_f')
 glider.add_constraint('terminal', 'vy - vy_f')
 
-
 def ctrl2reg(cl: np.array) -> np.array:
     return np.arcsin((2 * cl - min_Cl - max_Cl) / (max_Cl - min_Cl))
 
@@ -101,9 +100,9 @@ max_Cl = 1.4
 glider.add_constant('min_Cl', min_Cl)
 glider.add_constant('max_Cl', max_Cl)
 
-# glider.add_inequality_constraint(
-#     'control', 'Cl', lower_limit='min_Cl', upper_limit='max_Cl',
-#     regularizer=giuseppe.problems.symbolic.regularization.ControlConstraintHandler('eps_Cl', method='sin'))
+glider.add_inequality_constraint(
+    'control', 'Cl', lower_limit='min_Cl', upper_limit='max_Cl',
+    regularizer=giuseppe.problems.symbolic.regularization.ControlConstraintHandler('eps_Cl', method='sin'))
 
 # Create the OCP problem and numeric solver
 with giuseppe.utils.Timer(prefix='Compilation Time:'):
@@ -111,7 +110,7 @@ with giuseppe.utils.Timer(prefix='Compilation Time:'):
     num_solver = giuseppe.numeric_solvers.SciPySolver(comp_glider, verbose=1, node_buffer=1000)
 
 # Generate guess
-Cl_guess = .7
+Cl_guess = .5
 guess = giuseppe.guess_generation.auto_propagate_guess(comp_glider, control=ctrl2reg(np.array([Cl_guess])),
                                                        t_span=.1, initial_states=np.array((x_0, y_0, vx_0, vy_0)))
 
@@ -127,9 +126,11 @@ with open('seed_sol.data', 'wb') as f:
 
 cont = giuseppe.continuation.ContinuationHandler(num_solver, seed_sol)
 
+cont.add_linear_series(100, {'y_f': y_0 - 18}, bisection=True)
+cont.add_linear_series(100, {'vx_f': 9, 'vy_f': 1, 'y_f': 995}, bisection=True)
+cont.add_linear_series(100, {'y_f': 990, 'vx_f': 9, 'vy_f': .8}, bisection=True)
+
 cont.add_linear_series(100, {'y_f': y_f}, bisection=True)
-cont.add_linear_series(100, {'vx_f': vx_f}, bisection=True)
-cont.add_linear_series(100, {'y_f': y_f, 'vy_f': vy_f}, bisection=True)
 cont.add_logarithmic_series(200, {'eps_Cl': 1e-6}, bisection=True)
 
 sol_set = cont.run_continuation()

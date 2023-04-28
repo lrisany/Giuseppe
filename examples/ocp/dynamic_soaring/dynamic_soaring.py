@@ -104,21 +104,6 @@ max_Cl = 0.15
 min_sig = -75 * np.pi / 180
 max_sig = 75 * np.pi / 180
 
-prob.add_constant('min_tf', min_tf)
-prob.add_constant('max_tf', max_tf)
-prob.add_constant('min_x', min_x)
-prob.add_constant('max_x', max_x)
-prob.add_constant('min_y', min_y)
-prob.add_constant('max_y', max_y)
-prob.add_constant('min_z', min_z)
-prob.add_constant('max_z', max_z)
-prob.add_constant('min_v', min_v)
-prob.add_constant('max_v', max_v)
-prob.add_constant('min_gam', min_gam)
-prob.add_constant('max_gam', max_gam)
-prob.add_constant('min_psi', min_psi)
-prob.add_constant('max_psi', max_psi)
-
 prob.add_constant('min_beta', min_beta)
 prob.add_constant('max_beta', max_beta)
 prob.add_constant('min_Cl', min_Cl)
@@ -204,8 +189,9 @@ cont = giuseppe.continuation.ContinuationHandler(num_solver, seed_sol)
 # the below is from Winston's version
 psi1 = -1 * np.pi / 180
 gam1 = 1 * np.pi / 180
-cont.add_linear_series(100, {'delta_gam': gam1}, bisection=True)
+
 cont.add_linear_series(100, {'x_f': seed_sol.p[1] * np.sin(psi1), 'y_f': seed_sol.p[1] * np.cos(psi1), 'delta_psi': psi1}, bisection=True)
+cont.add_linear_series(100, {'delta_gam': gam1}, bisection=True)
 cont.add_logarithmic_series(200, {'eps_Cl': 1e-6})
 cont.add_logarithmic_series(200, {'eps_sig': 1e-6})
 
