@@ -201,7 +201,7 @@ def auto_propagate_dual_guess(
     if verbose:
         print(f'Matching states, parameters, and time to boundary conditions:')
 
-    guess = match_states_to_boundary_conditions(dual, guess, rel_tol=rel_tol, abs_tol=abs_tol, verbose=verbose)
+    # guess = match_states_to_boundary_conditions(dual, guess, rel_tol=rel_tol, abs_tol=abs_tol, verbose=verbose)
 
     if verbose:
         print(f'Propagating the dynamics in time\n')
@@ -226,7 +226,7 @@ def auto_propagate_dual_guess(
         if verbose:
             print(f'Fitting the costates and adjoint parameters:')
 
-        guess.lam = process_dynamic_value(guess.lam[:, 0], guess.x.shape)
+        guess.lam = process_dynamic_value(guess.lam[:, 0], (guess.x.shape[0] + guess.p.shape[0], guess.x.shape[1]))
         guess = match_adjoints(dual, guess, quadrature=quadrature, rel_tol=rel_tol, abs_tol=abs_tol,
                                condition_adjoints=condition_adjoints, verbose=verbose)
 
