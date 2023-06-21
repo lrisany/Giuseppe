@@ -103,6 +103,7 @@ u1_guess = 1  # guesses from original paper's solution
 u2_guess = 1
 guess = giuseppe.guess_generation.auto_propagate_guess(comp_craft, control=ctrl2reg(np.array([u1_guess, u2_guess])),
                                                        t_span=0.1, initial_states=np.array((w1_0, w2_0, x1_0, x2_0)))
+guess = giuseppe.guess_generation.InteractiveGuessGenerator(comp_craft, num_solver=num_solver, init_guess=guess).run()
 
 with open('guess.data', 'wb') as f:
     pickle.dump(guess, f)
