@@ -127,9 +127,9 @@ prob.add_constraint('initial', 'psi - psi_bound')
 prob.add_constraint('terminal', 'x - x_f')
 prob.add_constraint('terminal', 'y - y_f')
 prob.add_constraint('terminal', 'z - z_f')
-prob.add_constraint('terminal', 'v - v_bound + delta_v')
-prob.add_constraint('terminal', 'gam - gam_bound + delta_gam')
-prob.add_constraint('terminal', 'psi - psi_bound + delta_psi')
+prob.add_constraint('terminal', 'v - v_bound - delta_v')
+prob.add_constraint('terminal', 'gam - gam_bound - delta_gam')
+prob.add_constraint('terminal', 'psi - psi_bound - delta_psi')
 
 # bound the controls
 prob.add_inequality_constraint(
@@ -184,7 +184,7 @@ cont = giuseppe.continuation.ContinuationHandler(num_solver, seed_sol)
 
 # cont.add_linear_series(100, {'x_f': x_f, 'y_f': y_f})
 # cont.add_linear_series(100, {'z_f': z_f})
-# cont.add_linear_series(100, {'delta_gam': delta_gam, 'psi_f': delta_gam})
+# cont.add_linear_series(100, {'delta_gam': delta_gam, 'delta_psi': delta_psi})
 
 # the below is from Winston's version
 psi1 = -1 * np.pi / 180

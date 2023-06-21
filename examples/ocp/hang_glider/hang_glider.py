@@ -52,7 +52,7 @@ glider.add_control('Cl')
 glider.set_cost('0', '0', '-x')
 
 # Initial conditions
-x_0 = 0.0
+x_0 = 300.0
 y_0 = 1000
 vx_0 = 13.23
 vy_0 = -1.29
@@ -71,7 +71,7 @@ glider.add_constant('y_f', y_f)
 glider.add_constant('vx_f', vx_f)
 glider.add_constant('vy_f', vy_f)
 
-glider.add_constant('eps_Cl', 5e-1)
+glider.add_constant('eps_Cl', 1e-3)
 
 # define other initial/terminal constraints
 glider.add_constraint('initial', 't')
@@ -110,9 +110,9 @@ with giuseppe.utils.Timer(prefix='Compilation Time:'):
     num_solver = giuseppe.numeric_solvers.SciPySolver(comp_glider, verbose=1, node_buffer=1000)
 
 # Generate guess
-Cl_guess = .5
+Cl_guess = 1
 guess = giuseppe.guess_generation.auto_propagate_guess(comp_glider, control=ctrl2reg(np.array([Cl_guess])),
-                                                       t_span=.1, initial_states=np.array((x_0, y_0, vx_0, vy_0)))
+                                                       t_span=1, initial_states=np.array((x_0, y_0, vx_0, vy_0)))
 
 # guess = giuseppe.guess_generation.InteractiveGuessGenerator(comp_glider, num_solver=num_solver, init_guess=guess).run()
 
@@ -126,11 +126,11 @@ with open('seed_sol.data', 'wb') as f:
 
 cont = giuseppe.continuation.ContinuationHandler(num_solver, seed_sol)
 
-cont.add_linear_series(100, {'y_f': y_0 - 18}, bisection=True)
-cont.add_linear_series(100, {'vx_f': 9, 'vy_f': 1, 'y_f': 995}, bisection=True)
-cont.add_linear_series(100, {'y_f': 988, 'vx_f': 9, 'vy_f': .8}, bisection=True)
+# extend time
+cont.add_linear_series(100, {'vx_f': vx_f, 'vy_f': vy_f, 'y_f': y_f}, bisection=True)
 
-cont.add_linear_series(100, {'y_f': y_f}, bisection=True)
+cont.add_linear_series(100, {'x_0': 0}, bisection=True)
+
 cont.add_logarithmic_series(200, {'eps_Cl': 1e-6}, bisection=True)
 
 sol_set = cont.run_continuation()
